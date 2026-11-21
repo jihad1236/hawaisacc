@@ -361,10 +361,7 @@ class PremiumView extends StatelessWidget {
               ),
               Text(
                 '  •  ',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 11.sp, color: Colors.grey),
               ),
               Text(
                 'Terms of Service',
@@ -375,10 +372,7 @@ class PremiumView extends StatelessWidget {
               ),
               Text(
                 '  •  ',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 11.sp, color: Colors.grey),
               ),
               Text(
                 'Privacy Policy',

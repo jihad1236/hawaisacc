@@ -20,7 +20,7 @@ class ChartPoint {
 
 class ProgressController extends GetxController {
   ProgressController({ProgressApiService? apiService})
-      : _progressApiService = apiService ?? ProgressApiService();
+    : _progressApiService = apiService ?? ProgressApiService();
 
   final ProgressApiService _progressApiService;
 
@@ -93,8 +93,7 @@ class ProgressController extends GetxController {
   ].obs;
 
   // ── Personal Records (Your Best) ───────────────────────────────
-  final RxList<PersonalRecordItem> personalRecords =
-      <PersonalRecordItem>[].obs;
+  final RxList<PersonalRecordItem> personalRecords = <PersonalRecordItem>[].obs;
 
   @override
   void onInit() {
@@ -111,14 +110,14 @@ class ProgressController extends GetxController {
 
     try {
       // 1. Fetch v2.1 Progress Summary
-      final summary =
-          await _progressApiService.getProgressSummary(period: period);
+      final summary = await _progressApiService.getProgressSummary(
+        period: period,
+      );
       _applySummaryData(summary);
 
       // 2. Try fetching analytics for charts / PRs
       try {
-        final analytics =
-            await _progressApiService.getProgress(period: period);
+        final analytics = await _progressApiService.getProgress(period: period);
         _applyAnalyticsData(analytics);
       } catch (e) {
         debugPrint('Analytics extra fetch error: $e');
@@ -138,8 +137,9 @@ class ProgressController extends GetxController {
   Future<void> refreshProgress() async {
     final period = apiPeriods[selectedFilterIndex.value];
     try {
-      final summary =
-          await _progressApiService.getProgressSummary(period: period);
+      final summary = await _progressApiService.getProgressSummary(
+        period: period,
+      );
       _applySummaryData(summary);
 
       final analytics = await _progressApiService.getProgress(period: period);
@@ -172,7 +172,9 @@ class ProgressController extends GetxController {
       {
         'label': 'Workout',
         'value': '${s.workoutsCount}',
-        'change': s.workoutsCount == 1 ? '1 session' : '${s.workoutsCount} sessions',
+        'change': s.workoutsCount == 1
+            ? '1 session'
+            : '${s.workoutsCount} sessions',
         'trendDirection': s.workoutsCount > 0 ? 'up' : 'stable',
       },
       {
@@ -474,8 +476,8 @@ class ProgressController extends GetxController {
     final changeColor = trend == 'up'
         ? primary
         : trend == 'down'
-            ? Colors.red
-            : textGrey;
+        ? Colors.red
+        : textGrey;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,12 +515,12 @@ class ProgressController extends GetxController {
   }
 
   List<Shadow> get _shareTextShadow => const [
-        Shadow(color: Color(0xA6000000), blurRadius: 8, offset: Offset(0, 2)),
-      ];
+    Shadow(color: Color(0xA6000000), blurRadius: 8, offset: Offset(0, 2)),
+  ];
 
   List<Shadow> get _shareStrongTextShadow => const [
-        Shadow(color: Color(0xBF000000), blurRadius: 10, offset: Offset(0, 3)),
-      ];
+    Shadow(color: Color(0xBF000000), blurRadius: 10, offset: Offset(0, 3)),
+  ];
 
   void _showError(String message) {
     AppLoadingService.showError('Progress Failed', message);

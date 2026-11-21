@@ -41,6 +41,9 @@ symbols/
 **/android/captures/
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+*.keystore
 
 # iOS/macOS related
 **/ios/**/GeneratedPluginRegistrant.h
