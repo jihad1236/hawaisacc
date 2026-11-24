@@ -55,7 +55,7 @@ class InAppPurchaseService {
     _subscription?.cancel();
   }
 
-  Future<void> loadProducts() async {
+  Future<void> loadProducts([Set<String>? customProductIds]) async {
     try {
       final available = await _iap.isAvailable();
       isAvailable.value = available;
@@ -66,10 +66,19 @@ class InAppPurchaseService {
         return;
       }
 
-      final response = await _iap.queryProductDetails(productIds);
+      final idsToQuery = customProductIds != null && customProductIds.isNotEmpty
+          ? {...productIds, ...customProductIds}
+          : productIds;
+
+      final response = await _iap.queryProductDetails(idsToQuery);
       if (response.notFoundIDs.isNotEmpty) {
         debugPrint(
           '[InAppPurchaseService] Products not found in store: ${response.notFoundIDs}',
+        );
+      }
+      if (response.error != null) {
+        debugPrint(
+          '[InAppPurchaseService] Error returned from store: ${response.error!.code} - ${response.error!.message}',
         );
       }
       products.assignAll(response.productDetails);
@@ -97,7 +106,16 @@ class InAppPurchaseService {
     AppLoadingService.showLoading('Opening store checkout...');
 
     try {
-      final purchaseParam = PurchaseParam(productDetails: product);
+      final PurchaseParam purchaseParam;
+      if (Platform.isAndroid && product is GooglePlayProductDetails) {
+        purchaseParam = GooglePlayPurchaseParam(
+          productDetails: product,
+          offerToken: product.offerToken,
+        );
+      } else {
+        purchaseParam = PurchaseParam(productDetails: product);
+      }
+
       final started = await _iap.buyNonConsumable(purchaseParam: purchaseParam);
       if (!started) {
         isPurchasing.value = false;

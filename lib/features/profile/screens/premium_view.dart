@@ -150,12 +150,14 @@ class PremiumView extends StatelessWidget {
         children: [
           Icon(Icons.check, color: AppColors.primaryColor, size: 20.sp),
           SizedBox(width: 14.w),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.blackColor,
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.blackColor,
+              ),
             ),
           ),
         ],
@@ -166,7 +168,7 @@ class PremiumView extends StatelessWidget {
   Widget _buildPlanCards(PremiumController controller) {
     return Obx(
       () => SizedBox(
-        height: 230.h,
+        height: 245.h,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(controller.plans.length * 2 - 1, (slot) {
@@ -177,7 +179,7 @@ class PremiumView extends StatelessWidget {
             final index = slot ~/ 2;
             final plan = controller.plans[index];
             final isSelected = controller.selectedPlanIndex.value == index;
-            final hasBadge = isSelected && plan['badge']!.isNotEmpty;
+            final hasBadge = isSelected && (plan['badge']?.isNotEmpty ?? false);
 
             return Expanded(
               child: GestureDetector(
@@ -220,13 +222,13 @@ class PremiumView extends StatelessWidget {
         child: Column(
           children: [
             SizedBox(
-              height: 40.h,
+              height: 36.h,
               child: Center(
                 child: hasBadge
                     ? Text(
-                        plan['badge']!,
+                        plan['badge'] ?? '',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.blackColor,
                         ),
@@ -240,8 +242,8 @@ class PremiumView extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(
-                  vertical: isSelected ? 24.h : 22.h,
-                  horizontal: 18.w,
+                  vertical: isSelected ? 16.h : 14.h,
+                  horizontal: 12.w,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.whiteColor,
@@ -251,44 +253,46 @@ class PremiumView extends StatelessWidget {
                     width: isSelected ? 3 : 1.5,
                   ),
                 ),
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.blackColor,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        plan['label']!,
-                        style: TextStyle(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryColor,
-                        ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      plan['label'] ?? 'Pro',
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryColor,
                       ),
-                      SizedBox(height: 4.h),
-                      Text(plan['title']!),
-                      SizedBox(height: 18.h),
-                      RichText(
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      plan['title'] ?? '',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.blackColor,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: RichText(
+                        maxLines: 1,
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '${plan['currency']} ',
+                              text: '${plan['currency'] ?? ''} ',
                               style: TextStyle(
-                                fontSize: 18.sp,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.blackColor,
                               ),
                             ),
                             TextSpan(
-                              text: plan['price']!,
+                              text: plan['price'] ?? '',
                               style: TextStyle(
-                                fontSize: 36.sp,
+                                fontSize: 28.sp,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.blackColor,
                               ),
@@ -296,19 +300,21 @@ class PremiumView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        plan['billing']!,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.secondaryColor.withValues(
-                            alpha: 0.55,
-                          ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      plan['billing'] ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.secondaryColor.withValues(
+                          alpha: 0.55,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -344,44 +350,47 @@ class PremiumView extends StatelessWidget {
             ),
           ),
           SizedBox(height: 6.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: controller.onRestorePurchases,
-                child: Text(
-                  'Restore Purchases',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.blackColor,
-                    decoration: TextDecoration.underline,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: controller.onRestorePurchases,
+                  child: Text(
+                    'Restore Purchases',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blackColor,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                '  •  ',
-                style: TextStyle(fontSize: 11.sp, color: Colors.grey),
-              ),
-              Text(
-                'Terms of Service',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: AppColors.secondaryColor.withValues(alpha: 0.7),
+                Text(
+                  '  •  ',
+                  style: TextStyle(fontSize: 11.sp, color: Colors.grey),
                 ),
-              ),
-              Text(
-                '  •  ',
-                style: TextStyle(fontSize: 11.sp, color: Colors.grey),
-              ),
-              Text(
-                'Privacy Policy',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: AppColors.secondaryColor.withValues(alpha: 0.7),
+                Text(
+                  'Terms of Service',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.secondaryColor.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  '  •  ',
+                  style: TextStyle(fontSize: 11.sp, color: Colors.grey),
+                ),
+                Text(
+                  'Privacy Policy',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.secondaryColor.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

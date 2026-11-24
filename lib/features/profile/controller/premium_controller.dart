@@ -5,12 +5,12 @@ import 'package:get/get.dart';
 import 'package:hawiisaac/core/services/app_loading_service.dart';
 import 'package:hawiisaac/core/services/in_app_purchase_service.dart';
 import 'package:hawiisaac/features/profile/services/subscription_api_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class PremiumController extends GetxController {
-  PremiumController({
-    SubscriptionApiService? subscriptionApiService,
-  }) : _subscriptionApiService =
-            subscriptionApiService ?? SubscriptionApiService();
+  PremiumController({SubscriptionApiService? subscriptionApiService})
+    : _subscriptionApiService =
+          subscriptionApiService ?? SubscriptionApiService();
 
   // ─── Header ──────────────────────────────────────────────────────
   final String appName = 'HYKX';
@@ -61,12 +61,25 @@ class PremiumController extends GetxController {
   Future<void> loadStoreAndBackendPlans() async {
     isLoading.value = true;
     try {
-      // 1. Refresh store product details
-      await InAppPurchaseService.instance.loadProducts();
+      // 1. Fetch backend plans first to get dynamic product IDs
+      final backendPlans = await _subscriptionApiService.getSubscriptionPlans();
 
-      // 2. Fetch backend plans
-      final backendPlans =
-          await _subscriptionApiService.getSubscriptionPlans();
+      final dynamicIds = <String>{};
+      if (backendPlans.isNotEmpty) {
+        for (final plan in backendPlans) {
+          final mId = Platform.isIOS
+              ? plan.appleMonthlyProductId
+              : plan.googleMonthlyProductId;
+          final yId = Platform.isIOS
+              ? plan.appleYearlyProductId
+              : plan.googleYearlyProductId;
+          if (mId.isNotEmpty) dynamicIds.add(mId);
+          if (yId.isNotEmpty) dynamicIds.add(yId);
+        }
+      }
+
+      // 2. Refresh store product details with the configured product IDs
+      await InAppPurchaseService.instance.loadProducts(dynamicIds);
 
       if (backendPlans.isNotEmpty) {
         final plan = backendPlans.first;
@@ -77,7 +90,9 @@ class PremiumController extends GetxController {
             ? plan.appleYearlyProductId
             : plan.googleYearlyProductId;
 
-        final storeMonthly = InAppPurchaseService.instance.getProduct(monthlyId);
+        final storeMonthly = InAppPurchaseService.instance.getProduct(
+          monthlyId,
+        );
         final storeYearly = InAppPurchaseService.instance.getProduct(yearlyId);
 
         plans.assignAll([
@@ -85,9 +100,10 @@ class PremiumController extends GetxController {
             'label': 'Pro',
             'title': 'Monthly',
             'product_id': monthlyId,
-            'price': storeMonthly?.price.replaceAll(RegExp(r'[^0-9.]'), '') ??
-                plan.monthlyPrice,
-            'currency': storeMonthly?.currencySymbol ?? '\$',
+            'price': _formatStorePrice(storeMonthly, plan.monthlyPrice),
+            'currency': storeMonthly?.currencySymbol.trim().isNotEmpty == true
+                ? storeMonthly!.currencySymbol
+                : '\$',
             'billing': 'Billed monthly',
             'badge': 'Flexible',
           },
@@ -95,9 +111,10 @@ class PremiumController extends GetxController {
             'label': 'Pro',
             'title': 'Yearly',
             'product_id': yearlyId,
-            'price': storeYearly?.price.replaceAll(RegExp(r'[^0-9.]'), '') ??
-                plan.yearlyPrice,
-            'currency': storeYearly?.currencySymbol ?? '\$',
+            'price': _formatStorePrice(storeYearly, plan.yearlyPrice),
+            'currency': storeYearly?.currencySymbol.trim().isNotEmpty == true
+                ? storeYearly!.currencySymbol
+                : '\$',
             'billing': 'Billed yearly',
             'badge': 'Save 33%',
           },
@@ -108,6 +125,21 @@ class PremiumController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  String _formatStorePrice(ProductDetails? product, String fallbackPrice) {
+    if (product == null) return fallbackPrice;
+    if (product.rawPrice > 0) {
+      if (product.rawPrice % 1 == 0) {
+        return product.rawPrice.toInt().toString();
+      }
+      return product.rawPrice.toStringAsFixed(2);
+    }
+    final cleaned = product.price.replaceAll(RegExp(r'[^0-9.,]'), '').trim();
+    if (cleaned.endsWith('.00') || cleaned.endsWith(',00')) {
+      return cleaned.substring(0, cleaned.length - 3);
+    }
+    return cleaned.isNotEmpty ? cleaned : fallbackPrice;
   }
 
   void selectPlan(int index) {
@@ -135,19 +167,23 @@ class PremiumController extends GetxController {
     final storeProduct = InAppPurchaseService.instance.getProduct(productId);
 
     if (storeProduct != null) {
-      debugPrint('[PremiumController] Launching store purchase sheet for ${storeProduct.id}');
+      debugPrint(
+        '[PremiumController] Launching store purchase sheet for ${storeProduct.id}',
+      );
       await InAppPurchaseService.instance.buyProduct(storeProduct);
     } else {
-      debugPrint('[PremiumController] Product $productId not yet cached, re-querying store...');
-      await InAppPurchaseService.instance.loadProducts();
+      debugPrint(
+        '[PremiumController] Product $productId not yet cached, re-querying store...',
+      );
+      await InAppPurchaseService.instance.loadProducts({productId});
       final retryProduct = InAppPurchaseService.instance.getProduct(productId);
 
       if (retryProduct != null) {
         await InAppPurchaseService.instance.buyProduct(retryProduct);
       } else {
         AppLoadingService.showError(
-          'Store Unavailable',
-          'Could not connect to Google Play or App Store for $productId. Please verify store account.',
+          'Product Not Found in Store',
+          'Could not retrieve "$productId" from Google Play or App Store. Please ensure the subscription and active base plan are configured in Google Play Console / App Store Connect and testing opt-in is accepted.',
         );
       }
     }
